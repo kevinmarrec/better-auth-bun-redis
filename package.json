@@ -1,0 +1,57 @@
+{
+  "name": "@kevinmarrec/better-auth-bun-redis",
+  "type": "module",
+  "version": "0.0.0",
+  "packageManager": "bun@1.3.14",
+  "description": "Better Auth secondary storage backed by Bun's built-in Redis client.",
+  "author": "Kevin Marrec <kevin@marrec.io>",
+  "license": "MIT",
+  "homepage": "https://github.com/kevinmarrec/better-auth-bun-redis#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevinmarrec/better-auth-bun-redis.git"
+  },
+  "keywords": [
+    "better-auth",
+    "bun",
+    "redis",
+    "secondary-storage",
+    "storage"
+  ],
+  "exports": {
+    ".": "./dist/index.mjs"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "check": "bun run lint && bun run knip && bun run typecheck",
+    "knip": "knip -n",
+    "lint": "eslint . --cache",
+    "lint:inspect": "bunx @eslint/config-inspector",
+    "typecheck": "tsc --noEmit",
+    "release": "bumpp",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "peerDependencies": {
+    "@better-auth/core": "^1.7.0-rc.5"
+  },
+  "devDependencies": {
+    "@kevinmarrec/eslint-config": "^1.21.0",
+    "@kevinmarrec/tsconfig": "^1.21.0",
+    "@types/bun": "^1.3.14",
+    "@vitest/coverage-v8": "^4.1.10",
+    "bumpp": "^12.2.0",
+    "eslint": "^10.8.1",
+    "knip": "^6.32.0",
+    "taze": "^20.0.0",
+    "tsdown": "^0.22.14",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}
