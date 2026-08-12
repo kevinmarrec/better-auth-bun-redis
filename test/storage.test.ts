@@ -1,4 +1,3 @@
-import type { RedisClient } from 'bun'
 import { expect, it, mock } from 'bun:test'
 
 import { bunRedisStorage } from '../src'
@@ -12,7 +11,7 @@ import { bunRedisStorage } from '../src'
  * fallback. The behaviour those commands produce is covered against a real
  * Redis in `storage.integration.test.ts`.
  */
-function createClient(overrides: Partial<Record<keyof RedisClient, unknown>> = {}) {
+function createClient(overrides: Partial<Record<keyof Bun.RedisClient, unknown>> = {}) {
   return {
     get: mock(async () => null),
     set: mock(async () => 'OK'),
@@ -22,7 +21,7 @@ function createClient(overrides: Partial<Record<keyof RedisClient, unknown>> = {
     send: mock(async () => null),
     scan: mock(async () => ['0', []]),
     ...overrides,
-  } as unknown as RedisClient
+  } as unknown as Bun.RedisClient
 }
 
 it('prefixes keys with "better-auth:" by default', async () => {

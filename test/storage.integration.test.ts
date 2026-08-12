@@ -17,6 +17,10 @@ const client = new Bun.RedisClient(process.env.REDIS_URL ?? 'redis://127.0.0.1:6
 let counter = 0
 const nextPrefix = () => `test:${process.pid}:${counter++}:`
 
+function createStorage(keyPrefix = nextPrefix()) {
+  return { keyPrefix, storage: bunRedisStorage({ client, keyPrefix }) }
+}
+
 beforeAll(async () => {
   await client.connect()
 })
@@ -26,7 +30,7 @@ afterAll(() => {
 })
 
 it('round-trips a value', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
 
   await storage.set('session', 'value')
 
@@ -34,13 +38,13 @@ it('round-trips a value', async () => {
 })
 
 it('returns null for a missing key', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
 
   expect(await storage.get('absent')).toBeNull()
 })
 
 it('deletes a value', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
   await storage.set('session', 'value')
 
   await storage.delete('session')
@@ -49,26 +53,24 @@ it('deletes a value', async () => {
 })
 
 it('applies the TTL passed to set', async () => {
-  const prefix = nextPrefix()
-  const storage = bunRedisStorage({ client, keyPrefix: prefix })
+  const { keyPrefix, storage } = createStorage()
 
   await storage.set('session', 'value', 60)
 
-  expect(await client.ttl(`${prefix}session`)).toBeGreaterThan(0)
+  expect(await client.ttl(`${keyPrefix}session`)).toBeGreaterThan(0)
 })
 
 it('persists a value stored without a TTL', async () => {
-  const prefix = nextPrefix()
-  const storage = bunRedisStorage({ client, keyPrefix: prefix })
+  const { keyPrefix, storage } = createStorage()
 
   await storage.set('session', 'value')
 
   // -1 is Redis' answer for "key exists, no expiry".
-  expect(await client.ttl(`${prefix}session`)).toBe(-1)
+  expect(await client.ttl(`${keyPrefix}session`)).toBe(-1)
 })
 
 it('reads and removes a key in one step', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
   await storage.set('session', 'value')
 
   expect(await storage.getAndDelete('session')).toBe('value')
@@ -76,13 +78,13 @@ it('reads and removes a key in one step', async () => {
 })
 
 it('returns null when getting and deleting a missing key', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
 
   expect(await storage.getAndDelete('absent')).toBeNull()
 })
 
 it('increments a counter from one upwards', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
 
   expect(await storage.increment('hits', 60)).toBe(1)
   expect(await storage.increment('hits', 60)).toBe(2)
@@ -90,20 +92,19 @@ it('increments a counter from one upwards', async () => {
 })
 
 it('fixes the TTL window at creation instead of extending it', async () => {
-  const prefix = nextPrefix()
-  const storage = bunRedisStorage({ client, keyPrefix: prefix })
+  const { keyPrefix, storage } = createStorage()
 
   await storage.increment('hits', 100)
   // Shrink the window behind the storage's back: a correct implementation
   // leaves it alone, a naive INCR+EXPIRE would reset it to 100.
-  await client.expire(`${prefix}hits`, 10)
+  await client.expire(`${keyPrefix}hits`, 10)
   await storage.increment('hits', 100)
 
-  expect(await client.ttl(`${prefix}hits`)).toBeLessThanOrEqual(10)
+  expect(await client.ttl(`${keyPrefix}hits`)).toBeLessThanOrEqual(10)
 })
 
 it('lists the stored keys with the prefix stripped', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
   await storage.set('a', '1')
   await storage.set('b', '2')
 
@@ -111,7 +112,7 @@ it('lists the stored keys with the prefix stripped', async () => {
 })
 
 it('empties the store', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
   await storage.set('a', '1')
   await storage.set('b', '2')
 
@@ -121,30 +122,29 @@ it('empties the store', async () => {
 })
 
 it('clears an already-empty store without erroring', async () => {
-  const storage = bunRedisStorage({ client, keyPrefix: nextPrefix() })
+  const { storage } = createStorage()
 
   expect(await storage.clear()).toBeUndefined()
 })
 
 it('leaves keys outside the prefix untouched when clearing', async () => {
-  const prefix = nextPrefix()
-  const storage = bunRedisStorage({ client, keyPrefix: prefix })
+  const { keyPrefix, storage } = createStorage()
   await storage.set('mine', 'value')
-  const neighbour = `${prefix}x:theirs`
+  const neighbour = `${keyPrefix}x:theirs`
   await client.set(neighbour, 'value')
 
-  await bunRedisStorage({ client, keyPrefix: `${prefix}x:` }).clear()
+  await createStorage(`${keyPrefix}x:`).storage.clear()
 
   expect(await storage.get('mine')).toBe('value')
   expect(await client.get(neighbour)).toBeNull()
 })
 
 it('does not let glob metacharacters in the prefix widen the clear', async () => {
-  const prefix = nextPrefix()
-  const storage = bunRedisStorage({ client, keyPrefix: `${prefix}*:` })
+  const base = nextPrefix()
+  const { storage } = createStorage(`${base}*:`)
   await storage.set('mine', 'value')
-  // Matches `<prefix>*:*` only if the `*` in the prefix is treated as a glob.
-  const bystander = `${prefix}other:key`
+  // Matches `<base>*:*` only if the `*` in the prefix is treated as a glob.
+  const bystander = `${base}other:key`
   await client.set(bystander, 'value')
 
   await storage.clear()
