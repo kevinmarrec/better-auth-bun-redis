@@ -10,7 +10,7 @@ The official [`@better-auth/redis-storage`](https://www.npmjs.com/package/@bette
 
 - **Bun**, for `Bun.RedisClient`
 - **Redis >= 6.2** or **Valkey**, for the native `GETDEL` command
-- **Better Auth >= 1.7.0-rc.5**
+- **Better Auth >= 1.6.0**, including the 1.7 release candidates
 
 Tested in CI against Redis 8 and Valkey 9.
 

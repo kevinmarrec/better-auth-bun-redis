@@ -39,7 +39,7 @@
     "test:coverage": "bun test --coverage"
   },
   "peerDependencies": {
-    "@better-auth/core": "^1.7.0-rc.5"
+    "@better-auth/core": ">=1.6.0"
   },
   "devDependencies": {
     "@better-auth/core": "^1.7.0-rc.5",
