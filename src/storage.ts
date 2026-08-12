@@ -2,11 +2,16 @@ import type { SecondaryStorage } from '@better-auth/core/db'
 
 export interface BunRedisStorageConfig {
   /**
-   * Redis client instance from Bun.
+   * The Redis client to issue commands through.
+   *
+   * Pass `Bun.redis` to use the default client, which connects lazily using
+   * `REDIS_URL`. Its lifecycle stays yours: the storage never calls
+   * `connect()` or `close()`.
    */
   client: Bun.RedisClient
   /**
-   * Optional key prefix for all keys stored in Redis.
+   * Prefix prepended to every key, isolating this store from anything else
+   * sharing the server.
    *
    * @default 'better-auth:'
    */
@@ -39,6 +44,8 @@ const scanCount = 100
  *   secondaryStorage: bunRedisStorage({ client: Bun.redis }),
  * })
  * ```
+ *
+ * @returns A `SecondaryStorage` implementation, plus `listKeys()` and `clear()`
  */
 export function bunRedisStorage({ client, keyPrefix = 'better-auth:' }: BunRedisStorageConfig) {
   const prefixKey = (key: string) => `${keyPrefix}${key}`
@@ -67,19 +74,49 @@ export function bunRedisStorage({ client, keyPrefix = 'better-auth:' }: BunRedis
   }
 
   return {
+    /**
+     * Reads the value stored at `key`, or `null` when it is absent or expired.
+     */
     async get(key: string) {
       return client.get(prefixKey(key))
     },
 
+    /**
+     * Reads the value at `key` and removes it in the same operation, returning
+     * `null` when it is absent.
+     *
+     * Backed by `GETDEL`, so concurrent callers cannot both receive the value —
+     * which is what makes it safe for single-use tokens.
+     */
     async getAndDelete(key: string) {
       return client.getdel(prefixKey(key))
     },
 
+    /**
+     * Increments the counter at `key` by one and returns the new value.
+     *
+     * When the key is absent it is created with a value of `1` and the given
+     * `ttl`. The TTL is applied **only on creation**: later increments never
+     * extend it, so the counter expires a fixed window after it first appeared.
+     * Both steps run in a single Lua script, so the counter stays correct under
+     * concurrent callers.
+     *
+     * @param key - Key holding the counter
+     * @param ttl - Lifetime of the counter, in seconds, applied at creation
+     */
     async increment(key: string, ttl: number) {
       // `send` is untyped, so the reply is coerced rather than trusted.
       return Number(await client.send('EVAL', [incrementScript, '1', prefixKey(key), String(ttl)]))
     },
 
+    /**
+     * Stores `value` at `key`, replacing any existing value.
+     *
+     * @param key - Key to store the value at
+     * @param value - Value to store
+     * @param ttl - Lifetime in seconds; omitted or non-positive stores the
+     * value without an expiry
+     */
     async set(key: string, value: string, ttl?: number | undefined) {
       const prefixedKey = prefixKey(key)
 
@@ -91,6 +128,9 @@ export function bunRedisStorage({ client, keyPrefix = 'better-auth:' }: BunRedis
       }
     },
 
+    /**
+     * Removes `key`. Deleting a key that does not exist is a no-op.
+     */
     async delete(key: string) {
       await client.del(prefixKey(key))
     },
