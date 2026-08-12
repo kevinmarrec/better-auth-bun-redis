@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  check-and-test:
-    name: Check & Test
+  check:
+    name: Check
     runs-on: ubuntu-latest
     if: |
       !startsWith(github.event.head_commit.message, 'chore: release')
@@ -27,5 +27,36 @@ jobs:
       - name: Type check
         run: bun run typecheck
 
-      - name: Unit tests
+  test:
+    name: Test (${{ matrix.server.name }})
+    runs-on: ubuntu-latest
+    if: |
+      !startsWith(github.event.head_commit.message, 'chore: release')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        server:
+          - name: Redis
+            image: redis:8-alpine
+          - name: Valkey
+            image: valkey/valkey:9-alpine
+
+    services:
+      redis:
+        image: ${{ matrix.server.image }}
+        ports:
+          - 6379:6379
+        # The Valkey image ships a `redis-cli` shim, so one probe covers both.
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+
+    steps:
+      - name: Setup Bun
+        uses: kevinmarrec/workflows/setup-bun@cf2565ef1259e75eed0f621e6cc6f81703d4258b # main
+
+      - name: Unit & integration tests
         run: bun run test:coverage
