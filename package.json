@@ -2,7 +2,7 @@
   "name": "@kevinmarrec/better-auth-bun-redis",
   "type": "module",
   "version": "0.1.0",
-  "packageManager": "bun@1.4.2",
+  "packageManager": "bun@1.4.3",
   "description": "Better Auth secondary storage backed by Bun's built-in Redis client.",
   "author": "Kevin Marrec <kevin@marrec.io>",
   "license": "MIT",
@@ -49,7 +49,7 @@
     "better-auth": "^1.7.7",
     "bumpp": "^12.3.0",
     "eslint": "^10.12.0",
-    "knip": "^6.39.0",
+    "knip": "^6.41.0",
     "taze": "^21.3.0",
     "tsdown": "^0.23.0",
     "typescript": "^6.0.3"
