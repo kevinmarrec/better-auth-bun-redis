@@ -43,8 +43,8 @@
   },
   "devDependencies": {
     "@better-auth/core": "^1.7.10",
-    "@kevinmarrec/eslint-config": "^1.25.0",
-    "@kevinmarrec/tsconfig": "^1.25.0",
+    "@kevinmarrec/eslint-config": "^1.26.0",
+    "@kevinmarrec/tsconfig": "^1.26.0",
     "@types/bun": "^1.4.3",
     "better-auth": "^1.7.10",
     "bumpp": "^12.3.0",
