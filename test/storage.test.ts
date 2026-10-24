@@ -76,7 +76,9 @@ it('deletes the prefixed key', async () => {
 })
 
 it('reads and deletes atomically with the native GETDEL', async () => {
-  const client = createClient({ getdel: mock(async () => 'value') })
+  const client = createClient({
+    getdel: mock(async () => 'value'),
+  })
 
   const result = await bunRedisStorage({ client }).getAndDelete('session-1')
 
@@ -86,7 +88,9 @@ it('reads and deletes atomically with the native GETDEL', async () => {
 })
 
 it('increments through a single EVAL carrying the key and the TTL', async () => {
-  const client = createClient({ send: mock(async () => 1) })
+  const client = createClient({
+    send: mock(async () => 1),
+  })
 
   await bunRedisStorage({ client }).increment('rate-limit', 60)
 
@@ -98,7 +102,9 @@ it('increments through a single EVAL carrying the key and the TTL', async () => 
 })
 
 it('returns the incremented counter as a number', async () => {
-  const client = createClient({ send: mock(async () => '3') })
+  const client = createClient({
+    send: mock(async () => '3'),
+  })
 
   const result = await bunRedisStorage({ client }).increment('rate-limit', 60)
 
@@ -107,8 +113,14 @@ it('returns the incremented counter as a number', async () => {
 
 it('lists keys via SCAN, stripping the prefix and deduping across pages', async () => {
   const scan = mock(async (cursor: string) => cursor === '0'
-    ? ['7', ['better-auth:a', 'better-auth:b']]
-    : ['0', ['better-auth:b', 'better-auth:c']])
+    ? [
+        '7',
+        ['better-auth:a', 'better-auth:b'],
+      ]
+    : [
+        '0',
+        ['better-auth:b', 'better-auth:c'],
+      ])
   const client = createClient({ scan })
 
   const keys = await bunRedisStorage({ client }).listKeys()
@@ -133,7 +145,12 @@ it('escapes glob metacharacters so SCAN matches the prefix literally', async () 
 })
 
 it('strips the raw prefix even when it contains glob metacharacters', async () => {
-  const client = createClient({ scan: mock(async () => ['0', ['ba*:session']]) })
+  const client = createClient({
+    scan: mock(async () => [
+      '0',
+      ['ba*:session'],
+    ]),
+  })
 
   const keys = await bunRedisStorage({ client, keyPrefix: 'ba*:' }).listKeys()
 
@@ -142,8 +159,14 @@ it('strips the raw prefix even when it contains glob metacharacters', async () =
 
 it('deletes every page of keys when clearing', async () => {
   const scan = mock(async (cursor: string) => cursor === '0'
-    ? ['7', ['better-auth:a']]
-    : ['0', ['better-auth:b', 'better-auth:c']])
+    ? [
+        '7',
+        ['better-auth:a'],
+      ]
+    : [
+        '0',
+        ['better-auth:b', 'better-auth:c'],
+      ])
   const client = createClient({ scan })
 
   await bunRedisStorage({ client }).clear()
@@ -163,8 +186,12 @@ it('issues no DEL when clearing an empty store', async () => {
 
 it('propagates a mid-iteration failure, leaving earlier pages deleted', async () => {
   const scan = mock(async (cursor: string) => {
-    if (cursor === '0')
-      return ['7', ['better-auth:a']]
+    if (cursor === '0') {
+      return [
+        '7',
+        ['better-auth:a'],
+      ]
+    }
     throw new Error('connection lost')
   })
   const client = createClient({ scan })
