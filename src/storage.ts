@@ -106,7 +106,12 @@ export function bunRedisStorage({ client, keyPrefix = 'better-auth:' }: BunRedis
      */
     async increment(key: string, ttl: number) {
       // `send` is untyped, so the reply is coerced rather than trusted.
-      return Number(await client.send('EVAL', [incrementScript, '1', prefixKey(key), String(ttl)]))
+      return Number(await client.send('EVAL', [
+        incrementScript,
+        '1',
+        prefixKey(key),
+        String(ttl),
+      ]))
     },
 
     /**

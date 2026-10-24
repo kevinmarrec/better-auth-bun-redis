@@ -18,7 +18,10 @@ let counter = 0
 const nextPrefix = () => `test:${process.pid}:${counter++}:`
 
 function createStorage(keyPrefix = nextPrefix()) {
-  return { keyPrefix, storage: bunRedisStorage({ client, keyPrefix }) }
+  return {
+    keyPrefix,
+    storage: bunRedisStorage({ client, keyPrefix }),
+  }
 }
 
 beforeAll(async () => {

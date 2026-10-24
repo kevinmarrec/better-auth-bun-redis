@@ -24,7 +24,12 @@ function createAuth() {
       baseURL: 'http://localhost:3000',
       secret: 'a-test-secret-that-is-long-enough-to-be-accepted',
       // The memory adapter does not create tables on demand.
-      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      database: memoryAdapter({
+        user: [],
+        session: [],
+        account: [],
+        verification: [],
+      }),
       secondaryStorage: storage,
       emailAndPassword: { enabled: true },
     }),
