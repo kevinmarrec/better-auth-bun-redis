@@ -42,14 +42,14 @@
     "@better-auth/core": ">=1.6.0"
   },
   "devDependencies": {
-    "@better-auth/core": "^1.7.27",
+    "@better-auth/core": "^1.7.28",
     "@kevinmarrec/eslint-config": "^1.29.0",
     "@kevinmarrec/tsconfig": "^1.29.0",
     "@types/bun": "^1.4.5",
-    "better-auth": "^1.7.27",
+    "better-auth": "^1.7.28",
     "bumpp": "^12.3.0",
-    "eslint": "^10.15.0",
-    "knip": "^6.47.0",
+    "eslint": "^10.16.0",
+    "knip": "^6.49.0",
     "taze": "^21.3.0",
     "tsdown": "^0.23.7",
     "typescript": "^6.0.3"
